@@ -1,0 +1,50 @@
+body {
+    font-family: 'YourFont', sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+}
+
+header {
+    background-color: #1f1f1f;
+    padding: 10px;
+    text-align: center;
+}
+
+header h1 {
+    color: #ff1744;
+}
+
+#search {
+    padding: 8px;
+    width: 100%;
+    max-width: 600px;
+    margin: 15px auto;
+    display: block;
+}
+
+section {
+    padding: 20px;
+}
+
+#artists, #songs {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.artist, .song {
+    background-color: #222;
+    border: 1px solid #ff1744;
+    padding: 10px;
+    margin: 10px;
+    width: calc(33% - 40px);
+    box-sizing: border-box;
+}
+
+.artist img, .song img {
+    width: 100%;
+    border-radius: 4px;
+}
+
+.artist h3, .song h3 {
+    color: #ff1744;
+}
