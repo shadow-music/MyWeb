@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // توکن ربات تلگرام خود را وارد کنید
-const token = 'YOUR_TELEGRAM_BOT_TOKEN';
+const token = '6352712951:AAHtDi_d8NfcmpaYYE9uqX9jZGD-6lsyj40';
 const bot = new TelegramBot(token, { polling: true });
 
 // پوشه‌ای برای ذخیره فایل‌های آپلود شده
