@@ -73,7 +73,7 @@ bot.on('message', async (msg) => {
                     console.error('خطا در تغییر نام فایل:', err);
                     return bot.sendMessage(chatId, "مشکلی در ذخیره فایل شما به وجود آمد.");
                 }
-                bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد!`);
+                bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد \n برای ارسال فایل های بیشتر /start کلیک کنید!`);
             });
         });
     } catch (error) {
