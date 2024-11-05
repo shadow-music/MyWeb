@@ -84,7 +84,7 @@ bot.on('message', async (msg) => {
                     }
                 });
 
-                bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد!`);
+                bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد \n برای ارسال فایل های بیشتر روی /start کلیک کنید !`);
             });
         });
     } catch (error) {
