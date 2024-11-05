@@ -17,50 +17,33 @@ if (!fs.existsSync(uploadDir)) {
 // ذخیره وضعیت کاربران
 const userStatus = {};
 
-// پیام خوش‌آمدگویی با منوی شیشه‌ای به زبان فارسی
+// پیام خوش‌آمدگویی و درخواست آیدی در /start
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    userStatus[chatId] = { verified: false, requestedId: false }; // تعیین وضعیت اولیه برای کاربر
-
+    userStatus[chatId] = { verified: false }; // وضعیت اولیه کاربر
     bot.sendMessage(chatId, `خوش آمدید! لطفاً ابتدا آیدی تلگرام خود را مانند @example_user ارسال کنید تا بتوانید فایل آپلود کنید.`);
 });
 
-// بررسی آیدی ارسالی کاربر
+// هندلر برای بررسی آیدی ارسالی کاربر
 bot.onText(/^@([a-zA-Z0-9_]{5,})$/, (msg) => {
     const chatId = msg.chat.id;
     
-    // اگر شیء کاربر وجود ندارد، آن را ایجاد کنیم
-    if (!userStatus[chatId]) {
-        userStatus[chatId] = { verified: false, requestedId: false };
+    // اگر کاربر تأیید نشده، آیدی او را تأیید کنیم
+    if (!userStatus[chatId]?.verified) {
+        userStatus[chatId].verified = true; // تأیید آیدی
+        bot.sendMessage(chatId, "آیدی شما تأیید شد! حالا می‌توانید فایل‌ها را آپلود کنید.");
+    } else {
+        bot.sendMessage(chatId, "شما قبلاً تأیید شده‌اید و می‌توانید فایل آپلود کنید.");
     }
-
-    // بررسی اینکه آیا کاربر قبلاً تأیید شده است یا خیر
-    if (userStatus[chatId].verified) {
-        return bot.sendMessage(chatId, "شما قبلاً تأیید شده‌اید و می‌توانید فایل آپلود کنید.");
-    }
-
-    // تأیید آیدی و اجازه آپلود
-    userStatus[chatId].verified = true;
-    bot.sendMessage(chatId, "آیدی شما تأیید شد! حالا می‌توانید فایل‌ها را آپلود کنید.");
 });
 
 // هندلر برای دریافت فایل‌ها (عکس، ویدیو، صوت و فایل‌های دیگر)
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
 
-    // اطمینان از این‌که userStatus[chatId] وجود دارد
-    if (!userStatus[chatId]) {
-        userStatus[chatId] = { verified: false, requestedId: false };
-    }
-
-    // اگر پیام کاربر حاوی آیدی نیست و هنوز تأیید نشده است
-    if (!userStatus[chatId].verified) {
-        // چک کنیم که پیام درخواست آیدی قبلاً ارسال شده یا خیر
-        if (!userStatus[chatId].requestedId) {
-            userStatus[chatId].requestedId = true; // پس از ارسال پیام، آن را به true تنظیم کنید
-            return bot.sendMessage(chatId, "لطفاً ابتدا آیدی تلگرام خود را مانند @example_user ارسال کنید تا اجازه آپلود فایل به شما داده شود.");
-        }
-        return; // اگر پیام درخواست آیدی قبلاً ارسال شده باشد، هیچ پیام جدیدی ارسال نمی‌کند
+    // چک کردن وضعیت کاربر و ارسال درخواست آیدی اگر تأیید نشده است
+    if (!userStatus[chatId]?.verified) {
+        return; // اگر کاربر تأیید نشده باشد، بدون ارسال پیام برمی‌گردد
     }
 
     // ادامه پردازش فایل‌ها فقط برای کاربران تأیید شده
