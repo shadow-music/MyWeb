@@ -14,20 +14,39 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 
-// پیام استارت با منوی شیشه‌ای
+// ذخیره وضعیت کاربران
+const userStatus = {};
+
+// پیام خوش‌آمدگویی با منوی شیشه‌ای به زبان فارسی
 bot.onText(/\/start/, (msg) => {
-    bot.sendMessage(msg.chat.id, 'Welcome! Send me any file to upload, or use /list to see uploaded files.', {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: '📄 Show Uploaded Files', callback_data: 'list_files' }]
-            ]
-        }
-    });
+    const chatId = msg.chat.id;
+    userStatus[chatId] = { verified: false }; // تعیین وضعیت تأیید نشده برای کاربر
+
+    bot.sendMessage(chatId, `خوش آمدید! لطفاً ابتدا آیدی تلگرام خود را مانند @example_user ارسال کنید تا بتوانید فایل آپلود کنید.`);
 });
 
-// هندلر برای فایل‌ها (عکس، ویدیو، صوت و فایل‌های دیگر)
+// بررسی آیدی ارسالی کاربر
+bot.onText(/^@([a-zA-Z0-9_]{5,})$/, (msg) => {
+    const chatId = msg.chat.id;
+    
+    // بررسی اینکه آیا قبلاً تأیید شده است یا خیر
+    if (userStatus[chatId] && userStatus[chatId].verified) {
+        return bot.sendMessage(chatId, "شما قبلاً تأیید شده‌اید و می‌توانید فایل آپلود کنید.");
+    }
+
+    // تأیید آیدی و اجازه آپلود
+    userStatus[chatId] = { verified: true };
+    bot.sendMessage(chatId, "آیدی شما تأیید شد! حالا می‌توانید فایل‌ها را آپلود کنید.");
+});
+
+// هندلر برای دریافت فایل‌ها (عکس، ویدیو، صوت و فایل‌های دیگر)
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
+    
+    // اگر کاربر تأیید نشده باشد، اجازه آپلود ندارد
+    if (!userStatus[chatId] || !userStatus[chatId].verified) {
+        return bot.sendMessage(chatId, "لطفاً ابتدا آیدی تلگرام خود را مانند @example_user ارسال کنید تا اجازه آپلود فایل به شما داده شود.");
+    }
     
     // چک کردن نوع فایل
     let fileId;
@@ -40,7 +59,7 @@ bot.on('message', async (msg) => {
     } else if (msg.audio) {
         fileId = msg.audio.file_id;                        // صوت
     } else {
-        return bot.sendMessage(chatId, "Please send a valid file (photo, document, video, audio).");
+        return bot.sendMessage(chatId, "لطفاً یک فایل معتبر (عکس، سند، ویدیو، صوت) ارسال کنید.");
     }
 
     try {
@@ -49,16 +68,15 @@ bot.on('message', async (msg) => {
         const filePath = file.file_path;
         const downloadUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
 
-        // دانلود فایل و ذخیره آن
+        // دانلود و ذخیره فایل
         const fileName = path.basename(filePath);
-        const fileStream = fs.createWriteStream(path.join(uploadDir, fileName));
         
         bot.downloadFile(fileId, uploadDir).then(() => {
-            bot.sendMessage(chatId, `File "${fileName}" has been uploaded successfully!`);
+            bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد!`);
         });
     } catch (error) {
-        console.error('Error downloading file:', error);
-        bot.sendMessage(chatId, "There was an error uploading your file.");
+        console.error('خطا در دانلود فایل:', error);
+        bot.sendMessage(chatId, "مشکلی در آپلود فایل شما به وجود آمد.");
     }
 });
 
@@ -67,28 +85,19 @@ bot.onText(/\/list/, (msg) => {
     sendFileList(msg.chat.id);
 });
 
-// هندلر برای منوی شیشه‌ای (لیست فایل‌ها)
-bot.on('callback_query', (query) => {
-    const chatId = query.message.chat.id;
-
-    if (query.data === 'list_files') {
-        sendFileList(chatId);
-    }
-});
-
 // تابع برای ارسال لیست فایل‌های آپلود شده
 function sendFileList(chatId) {
     fs.readdir(uploadDir, (err, files) => {
         if (err) {
-            console.error('Error reading files:', err);
-            return bot.sendMessage(chatId, "There was an error reading the uploaded files.");
+            console.error('خطا در خواندن فایل‌ها:', err);
+            return bot.sendMessage(chatId, "مشکلی در خواندن فایل‌های آپلود شده به وجود آمد.");
         }
 
         if (files.length === 0) {
-            bot.sendMessage(chatId, "No files have been uploaded yet.");
+            bot.sendMessage(chatId, "هنوز هیچ فایلی آپلود نشده است.");
         } else {
             const fileButtons = files.map(file => [{ text: file, callback_data: `file_${file}` }]);
-            bot.sendMessage(chatId, "Uploaded files:", {
+            bot.sendMessage(chatId, "فایل‌های آپلود شده:", {
                 reply_markup: {
                     inline_keyboard: fileButtons
                 }
@@ -109,9 +118,9 @@ bot.on('callback_query', (query) => {
         // چک کردن وجود فایل
         if (fs.existsSync(filePath)) {
             bot.sendDocument(chatId, filePath, {}, { filename: fileName })
-                .catch(err => console.error('Error sending file:', err));
+                .catch(err => console.error('خطا در ارسال فایل:', err));
         } else {
-            bot.sendMessage(chatId, "File not found.");
+            bot.sendMessage(chatId, "فایل مورد نظر یافت نشد.");
         }
     }
 });
