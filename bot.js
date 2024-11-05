@@ -8,6 +8,7 @@ const bot = new TelegramBot(token, { polling: true });
 
 // پوشه‌ای برای ذخیره فایل‌های آپلود شده
 const uploadDir = path.join(__dirname, 'uploads');
+const logFilePath = path.join(__dirname, 'uploads_log.txt'); // فایل لاگ برای ذخیره تاریخچه آپلودها
 
 // اگر پوشه 'uploads' وجود ندارد، آن را ایجاد می‌کنیم
 if (!fs.existsSync(uploadDir)) {
@@ -40,6 +41,7 @@ bot.onText(/^@([a-zA-Z0-9_]{5,})$/, (msg) => {
 // هندلر برای دریافت فایل‌ها (عکس، ویدیو، صوت و فایل‌های دیگر)
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
+    const username = msg.from.username || 'unknown_user'; // نام کاربری کاربر
 
     // چک کردن وضعیت کاربر و ارسال درخواست آیدی اگر تأیید نشده است
     if (!userStatus[chatId]?.verified) {
@@ -73,7 +75,16 @@ bot.on('message', async (msg) => {
                     console.error('خطا در تغییر نام فایل:', err);
                     return bot.sendMessage(chatId, "مشکلی در ذخیره فایل شما به وجود آمد.");
                 }
-                bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد \n برای ارسال فایل های بیشتر /start کلیک کنید!`);
+
+                // ذخیره اطلاعات آپلود در فایل لاگ
+                const logEntry = `کاربر: ${username}, فایل: ${fileName}\n`;
+                fs.appendFile(logFilePath, logEntry, (err) => {
+                    if (err) {
+                        console.error('خطا در نوشتن لاگ آپلود:', err);
+                    }
+                });
+
+                bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد!`);
             });
         });
     } catch (error) {
