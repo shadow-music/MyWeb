@@ -20,7 +20,7 @@ const userStatus = {};
 // پیام خوش‌آمدگویی با منوی شیشه‌ای به زبان فارسی
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    userStatus[chatId] = { verified: false }; // تعیین وضعیت تأیید نشده برای کاربر
+    userStatus[chatId] = { verified: false, requestedId: false }; // تعیین وضعیت اولیه برای کاربر
 
     bot.sendMessage(chatId, `خوش آمدید! لطفاً ابتدا آیدی تلگرام خود را مانند @example_user ارسال کنید تا بتوانید فایل آپلود کنید.`);
 });
@@ -29,26 +29,31 @@ bot.onText(/\/start/, (msg) => {
 bot.onText(/^@([a-zA-Z0-9_]{5,})$/, (msg) => {
     const chatId = msg.chat.id;
     
-    // بررسی اینکه آیا قبلاً تأیید شده است یا خیر
+    // بررسی اینکه آیا کاربر قبلاً تأیید شده است یا خیر
     if (userStatus[chatId] && userStatus[chatId].verified) {
         return bot.sendMessage(chatId, "شما قبلاً تأیید شده‌اید و می‌توانید فایل آپلود کنید.");
     }
 
     // تأیید آیدی و اجازه آپلود
-    userStatus[chatId] = { verified: true };
+    userStatus[chatId] = { verified: true, requestedId: true };
     bot.sendMessage(chatId, "آیدی شما تأیید شد! حالا می‌توانید فایل‌ها را آپلود کنید.");
 });
 
 // هندلر برای دریافت فایل‌ها (عکس، ویدیو، صوت و فایل‌های دیگر)
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
-    
-    // اگر کاربر تأیید نشده باشد، اجازه آپلود ندارد
+
+    // اگر پیام کاربر حاوی آیدی نیست، و هنوز تأیید نشده است
     if (!userStatus[chatId] || !userStatus[chatId].verified) {
-        return bot.sendMessage(chatId, "لطفاً ابتدا آیدی تلگرام خود را مانند @example_user ارسال کنید تا اجازه آپلود فایل به شما داده شود.");
+        // چک کنیم که پیام درخواست آیدی قبلاً ارسال شده یا خیر
+        if (!userStatus[chatId].requestedId) {
+            userStatus[chatId].requestedId = true;
+            return bot.sendMessage(chatId, "لطفاً ابتدا آیدی تلگرام خود را مانند @example_user ارسال کنید تا اجازه آپلود فایل به شما داده شود.");
+        }
+        return; // اگر پیام درخواست آیدی قبلاً ارسال شده باشد، هیچ پیام جدیدی ارسال نمی‌کند
     }
-    
-    // چک کردن نوع فایل
+
+    // ادامه پردازش فایل‌ها فقط برای کاربران تأیید شده
     let fileId;
     if (msg.photo) {
         fileId = msg.photo[msg.photo.length - 1].file_id;  // عکس
