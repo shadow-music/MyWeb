@@ -29,13 +29,19 @@ bot.onText(/\/start/, (msg) => {
 bot.onText(/^@([a-zA-Z0-9_]{5,})$/, (msg) => {
     const chatId = msg.chat.id;
     
+    // اگر شیء کاربر وجود ندارد، آن را ایجاد کنیم
+    if (!userStatus[chatId]) {
+        userStatus[chatId] = { verified: false, requestedId: false };
+    }
+
     // بررسی اینکه آیا کاربر قبلاً تأیید شده است یا خیر
-    if (userStatus[chatId] && userStatus[chatId].verified) {
+    if (userStatus[chatId].verified) {
         return bot.sendMessage(chatId, "شما قبلاً تأیید شده‌اید و می‌توانید فایل آپلود کنید.");
     }
 
     // تأیید آیدی و اجازه آپلود
-    userStatus[chatId] = { verified: true, requestedId: true };
+    userStatus[chatId].verified = true;
+    userStatus[chatId].requestedId = true;
     bot.sendMessage(chatId, "آیدی شما تأیید شد! حالا می‌توانید فایل‌ها را آپلود کنید.");
 });
 
@@ -43,8 +49,13 @@ bot.onText(/^@([a-zA-Z0-9_]{5,})$/, (msg) => {
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
 
-    // اگر پیام کاربر حاوی آیدی نیست، و هنوز تأیید نشده است
-    if (!userStatus[chatId] || !userStatus[chatId].verified) {
+    // اطمینان از این‌که userStatus[chatId] وجود دارد
+    if (!userStatus[chatId]) {
+        userStatus[chatId] = { verified: false, requestedId: false };
+    }
+
+    // اگر پیام کاربر حاوی آیدی نیست و هنوز تأیید نشده است
+    if (!userStatus[chatId].verified) {
         // چک کنیم که پیام درخواست آیدی قبلاً ارسال شده یا خیر
         if (!userStatus[chatId].requestedId) {
             userStatus[chatId].requestedId = true;
