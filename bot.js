@@ -47,30 +47,34 @@ bot.on('message', async (msg) => {
     }
 
     // ادامه پردازش فایل‌ها فقط برای کاربران تأیید شده
-    let fileId;
-    if (msg.photo) {
-        fileId = msg.photo[msg.photo.length - 1].file_id;  // عکس
-    } else if (msg.document) {
+    let fileId, fileName;
+    if (msg.document) {
         fileId = msg.document.file_id;                     // اسناد
+        fileName = msg.document.file_name || `file_${Date.now()}`; // نام فایل یا یک نام تصادفی
     } else if (msg.video) {
         fileId = msg.video.file_id;                        // ویدیو
+        fileName = msg.video.file_name || `video_${Date.now()}`; // نام ویدیو یا یک نام تصادفی
     } else if (msg.audio) {
         fileId = msg.audio.file_id;                        // صوت
+        fileName = msg.audio.file_name || `audio_${Date.now()}`; // نام صوت یا یک نام تصادفی
+    } else if (msg.photo) {
+        fileId = msg.photo[msg.photo.length - 1].file_id;  // عکس
+        fileName = `photo_${Date.now()}.jpg`;              // چون عکس نام فایل ندارد
     } else {
         return bot.sendMessage(chatId, "لطفاً یک فایل معتبر (عکس، سند، ویدیو، صوت) ارسال کنید.");
     }
 
     try {
-        // دریافت لینک دانلود فایل
-        const file = await bot.getFile(fileId);
-        const filePath = file.file_path;
-        const downloadUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
-
-        // دانلود و ذخیره فایل
-        const fileName = path.basename(filePath);
-        
-        bot.downloadFile(fileId, uploadDir).then(() => {
-            bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد!`);
+        // دانلود و ذخیره فایل با نام اصلی
+        bot.downloadFile(fileId, uploadDir).then(filePath => {
+            const originalFilePath = path.join(uploadDir, fileName);
+            fs.rename(filePath, originalFilePath, (err) => {
+                if (err) {
+                    console.error('خطا در تغییر نام فایل:', err);
+                    return bot.sendMessage(chatId, "مشکلی در ذخیره فایل شما به وجود آمد.");
+                }
+                bot.sendMessage(chatId, `فایل "${fileName}" با موفقیت آپلود شد!`);
+            });
         });
     } catch (error) {
         console.error('خطا در دانلود فایل:', error);
