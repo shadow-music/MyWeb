@@ -41,7 +41,6 @@ bot.onText(/^@([a-zA-Z0-9_]{5,})$/, (msg) => {
 
     // تأیید آیدی و اجازه آپلود
     userStatus[chatId].verified = true;
-    userStatus[chatId].requestedId = true;
     bot.sendMessage(chatId, "آیدی شما تأیید شد! حالا می‌توانید فایل‌ها را آپلود کنید.");
 });
 
@@ -58,7 +57,7 @@ bot.on('message', async (msg) => {
     if (!userStatus[chatId].verified) {
         // چک کنیم که پیام درخواست آیدی قبلاً ارسال شده یا خیر
         if (!userStatus[chatId].requestedId) {
-            userStatus[chatId].requestedId = true;
+            userStatus[chatId].requestedId = true; // پس از ارسال پیام، آن را به true تنظیم کنید
             return bot.sendMessage(chatId, "لطفاً ابتدا آیدی تلگرام خود را مانند @example_user ارسال کنید تا اجازه آپلود فایل به شما داده شود.");
         }
         return; // اگر پیام درخواست آیدی قبلاً ارسال شده باشد، هیچ پیام جدیدی ارسال نمی‌کند
