@@ -9,9 +9,9 @@ import (
 
 var fileLinks = map[string]string{
     "file1": "music/DJ Sajjad & Fama - Ghalaf.mp3",
-	"file2": "music/Gang Vaghei (BLH Remix).mp3",
+	"file2": "music/Barzakh.mp3",
 	"file3": "music/Pishro - Tamum Shode (featuring Kamyar).mp3",
-	"file4": "music/Seft (Djsajjad1 & BLH Remix).mp3",
+	"file4": "music/SAD!.mp3",
 }
 
 func main() {
