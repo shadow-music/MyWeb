@@ -28,7 +28,10 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	updates, err := bot.GetUpdatesChan(u)
-
+	if err != nil {
+		log.Fatalf("Failed to get updates: %v", err) // یا پیغام دلخواه خودتان را ثبت کنید
+	}
+	
 	// پردازش آپدیت‌ها
 	for update := range updates {
 		if update.Message == nil {
