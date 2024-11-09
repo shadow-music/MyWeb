@@ -16,7 +16,7 @@ var fileLinks = map[string]string{
 
 func main() {
 	// توکن ربات تلگرام شما
-	token := "6352712951:AAHtDi_d8NfcmpaYYE9uqX9jZGD-6lsyj40"
+	token := "6414679474:AAHBrTFt5sCbbudkXHu3JvPrR_Pj50T30qs"
 
 	// اتصال به API تلگرام
 	bot, err := tgbotapi.NewBotAPI(token)
