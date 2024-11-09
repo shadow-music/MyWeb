@@ -1,14 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
+	"net/http"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 var fileLinks = map[string]string{
-    "file1": "music/DJ Sajjad & Fama - Ghalaf.mp3",
+	"file1": "music/DJ Sajjad & Fama - Ghalaf.mp3",
 	"file2": "music/Barzakh.mp3",
 	"file3": "music/Pishro - Tamum Shode (featuring Kamyar).mp3",
 	"file4": "music/SAD!.mp3",
@@ -24,18 +26,25 @@ func main() {
 		log.Panic(err)
 	}
 
-	// راه‌اندازی آپدیت‌ها
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
-	updates, err := bot.GetUpdatesChan(u)
+	// راه‌اندازی Webhook
+	webhookURL := "https://YOUR_URL.com/" + bot.Token // این URL باید آدرس سرور شما باشد
+	_, err = bot.SetWebhook(tgbotapi.NewWebhook(webhookURL))
 	if err != nil {
-		log.Fatalf("Failed to get updates: %v", err) // یا پیغام دلخواه خودتان را ثبت کنید
+		log.Fatalf("Failed to set webhook: %v", err)
 	}
-	
-	// پردازش آپدیت‌ها
-	for update := range updates {
+
+	// شروع سرور HTTP برای دریافت درخواست‌های Webhook
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		update := tgbotapi.Update{}
+		err := json.NewDecoder(r.Body).Decode(&update)
+		if err != nil {
+			http.Error(w, "Error decoding update", http.StatusBadRequest)
+			return
+		}
+
+		// پردازش پیام
 		if update.Message == nil {
-			continue
+			return
 		}
 
 		// شناسه چت کاربر
@@ -51,9 +60,6 @@ func main() {
 		if strings.HasPrefix(text, "/start") {
 			// استخراج پارامتر بعد از /start
 			command := strings.TrimPrefix(text, "/start ")
-
-			// چاپ فرمان استخراج‌شده
-			log.Printf("Command extracted: %s", command)
 
 			// بررسی و ارسال فایل
 			if fileURL, exists := fileLinks[command]; exists {
@@ -73,5 +79,8 @@ func main() {
 			msg := tgbotapi.NewMessage(chatID, "لطفا لینک معتبر ارسال کنید.")
 			bot.Send(msg)
 		}
-	}
+	})
+
+	// شروع HTTP Server
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
